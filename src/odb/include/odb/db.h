@@ -347,6 +347,12 @@ class dbDatabase : public dbObject
   dbMaster* findMaster(const char* name);
 
   ///
+  /// This function used to delete unused master-cells.
+  /// It called from deltaDebug.py
+  ///
+  int removeUnusedMasters();
+
+  ///
   /// Get the chip of this database.
   /// Returns nullptr if no chip has been created.
   ///

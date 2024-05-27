@@ -427,6 +427,46 @@ dbMaster* dbDatabase::findMaster(const char* name)
   return nullptr;
 }
 
+// Remove unused masters
+int dbDatabase::removeUnusedMasters()
+{
+  std::vector<dbMaster*> masters;
+  dbSet<dbLib> libs = getLibs();
+  // Iterate through libs in Database
+  for (auto it = libs.begin(); it != libs.end(); ++it) {
+    dbLib* lib = *it;
+    dbSet<dbMaster> mastersOfLib = lib->getMasters();
+    dbSet<dbMaster>::iterator masterIt;
+
+    // Collect all dbMasters for later comparision
+    for (masterIt = mastersOfLib.begin(); masterIt != mastersOfLib.end();
+         ++masterIt) {
+      masters.push_back(*masterIt);
+    }
+  }
+  // Get instances from this Database
+  dbChip* chip = getChip();
+  dbBlock* block = chip->getBlock();
+  dbSet<dbInst> insts = block->getInsts();
+  dbSet<dbInst>::iterator instIt;
+  // Iterate through all instances to get their master-cells
+  for (instIt = insts.begin(); instIt != insts.end(); ++instIt) {
+    dbMaster* inst_master = instIt->getMaster();
+    // Filter out the master that matches inst_master
+    std::vector<dbMaster*>::iterator elem_to_remove
+        = std::find(masters.begin(), masters.end(), inst_master);
+    if (elem_to_remove != masters.end()) {
+      // maseters container contain unused masters
+      masters.erase(elem_to_remove);
+    }
+  }
+  // Remove remaining unused masters
+  for (auto& elem : masters)
+    elem->destroy(elem);
+
+  return masters.size();
+}
+
 dbSet<dbChip> dbDatabase::getChips()
 {
   _dbDatabase* db = (_dbDatabase*) this;
