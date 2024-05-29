@@ -208,7 +208,7 @@ class deltaDebugger:
 #Create new clean dbDatabase
         self.base_db = Design.createDetachedDb()
         self.base_db = odb.read_db(self.base_db, self.deltaDebug_result_base_file)
-# Remove unused dbMasters from dbDatabase befor it's destruction
+#Remove unused dbMasters from dbDatabase befor it's destruction
         self.base_db.removeUnusedMasters()
         dir_path = os.path.dirname(self.original_base_db_file)
 
