@@ -207,21 +207,24 @@ class deltaDebugger:
 
 #Create new clean dbDatabase
         self.base_db = Design.createDetachedDb()
-        print(f"READING {self.deltaDebug_result_base_file}  FILE \n")
         self.base_db = odb.read_db(self.base_db, self.deltaDebug_result_base_file)
-#To remove unused dbMasters from dbDatabase befor it's destruction
-        self.base_db.rmUnusedMasters()
-#Get.odb file's directory name
+# Remove unused dbMasters from dbDatabase befor it's destruction
+        self.base_db.removeUnusedMasters()
         dir_path = os.path.dirname(self.original_base_db_file)
 
 #Write in experimental "END_RESULT.odb" file
         resulting_file = os.path.join(dir_path, f"END_RESULT.odb")
-        print(f"RESULTING FILE IS = {resulting_file} \n")
         odb.write_db(self.base_db, resulting_file)
+
         for lib in self.base_db.getLibs():
             odb.write_lef(lib, os.path.join(dir_path, f"END_RESULT.lef"))
         block = self.base_db.getChip().getBlock()
         odb.write_def(block, os.path.join(dir_path, f"END_RESULT.def"))
+#Destroy the DB in memory to avoid being out - of - memory when
+#the step code is running
+        if (self.base_db is not None):
+            self.base_db.destroy(self.base_db)
+            self.base_db = None
 
         print("___________________________________")
         print(f"Resultant file is {self.deltaDebug_result_base_file}")
