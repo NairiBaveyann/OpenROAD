@@ -151,7 +151,6 @@ class deltaDebugger:
                 "Performing a step with the original input file to calculate timeout."
             )
             error, _ = self.perform_step()
-
             if error is None:
                 print("No error found in the original input file.")
                 sys.exit(1)

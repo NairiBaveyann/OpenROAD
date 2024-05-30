@@ -316,8 +316,6 @@ class dbDoubleProperty : public dbProperty
 class dbDatabase : public dbObject
 {
  public:
-
-
   ///
   /// Return the libs contained in the database. A database can contain
   /// multiple libs.
@@ -350,7 +348,7 @@ class dbDatabase : public dbObject
 
   ///
   /// This function used to delete unused master-cells.
-  ///
+  /// Returns the number of unused master-cells that have been deleted.
   ///
   int removeUnusedMasters();
 
