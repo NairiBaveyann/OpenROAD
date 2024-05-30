@@ -191,6 +191,9 @@ class deltaDebugger:
                 if err is None or cuts == 0:
                     break
 
+        # Delete unused master-cells from design
+        self.remove_unused_masters()
+
         # Change deltaDebug resultant base_db file name to a representative name
         if os.path.exists(self.temp_base_db_file):
             os.rename(self.temp_base_db_file, self.deltaDebug_result_base_file)
@@ -198,8 +201,6 @@ class deltaDebugger:
         # Restoring the original base_db file
         if os.path.exists(self.original_base_db_file):
             os.rename(self.original_base_db_file, self.base_db_file)
-        # Delete unused master-cells from design
-        self.remove_unused_masters(self.deltaDebug_result_base_file, write_def = 1, write_lef = 1)
 
         print("___________________________________")
         print(f"Resultant file is {self.deltaDebug_result_base_file}")
@@ -393,34 +394,32 @@ class deltaDebugger:
                 self.clear_dont_touch_net(elm)
             elm.destroy(elm)
 
-    def remove_unused_masters(self, db_file, write_def = 0, write_lef = 0):
+    def remove_unused_masters(self):
         # Create new clean dbDatabase
         self.base_db = Design.createDetachedDb()
-        print(f"Reading {db_file}  file \n")
-        self.base_db = odb.read_db(self.base_db, db_file)
+        print(f"Reading {self.temp_base_db_file}  file ")
+
+        if os.path.exists(self.temp_base_db_file):
+            tmp_db_file = os.path.join(os.path.dirname(self.temp_base_db_file), "tmp.odb")
+            shutil.copy2(self.temp_base_db_file, tmp_db_file)
+
+        self.base_db = odb.read_db(self.base_db, tmp_db_file)
 
         #To remove unused dbMasters from dbDatabase befor it's dstruction
         print("Removing unused masters...")
         self.base_db.removeUnusedMasters()
-        # Get .odb file's directory name
-        dir_path = os.path.dirname(self.original_base_db_file)
 
-        # Write in experimental "END_RESULT.odb" file
-        resulting_file = os.path.join(dir_path, f"END_RESULT.odb")
-        print(f"Writing in the resulting file  {resulting_file} \n")
-        odb.write_db(self.base_db, resulting_file)
+        # Write in intermadiate temproray file
+        print(f"Writing in the temprary file  {tmp_db_file}")
+        result = odb.write_db(self.base_db, tmp_db_file)
 
-        if (1 == write_lef):
-            idx = 1
-            for lib in self.base_db.getLibs():
-                lef_file = resulting_file[:-4] + str(idx) + ".lef"
-                odb.write_lef(lib, lef_file)
-                idx += 1
-
-        if (1 == write_def):
-            block = self.base_db.getChip().getBlock()
-            def_file = resulting_file[:-3] + "def"
-            odb.write_def(block, def_file)
+        if (self.dump_def != 0):
+            print("Writing def file")
+            odb.write_def(self.base_db.getChip().getBlock(),
+                          tmp_db_file[:-3] + "def")
+        # If everything is fine assign tmp.odb to self.temp_base_db_file file
+        if (result == 1):
+            self.temp_base_db_file = tmp_db_file
 
         if (self.base_db is not None):
             self.base_db.destroy(self.base_db)
