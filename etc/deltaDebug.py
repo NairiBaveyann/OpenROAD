@@ -200,7 +200,7 @@ class deltaDebugger:
         if os.path.exists(self.original_base_db_file):
             os.rename(self.original_base_db_file, self.base_db_file)
         # Delete unused master-cells from design
-        self.remove_unused_masters(self.deltaDebug_result_base_file)
+        self.remove_unused_masters(self.deltaDebug_result_base_file, write_def = 1, write_lef = 1)
 
         print("___________________________________")
         print(f"Resultant file is {self.deltaDebug_result_base_file}")
@@ -394,7 +394,7 @@ class deltaDebugger:
                 self.clear_dont_touch_net(elm)
             elm.destroy(elm)
 
-    def remove_unused_masters(self, db_file, wrt_def = 0, wrt_lef = 0):
+    def remove_unused_masters(self, db_file, write_def = 0, write_lef = 0):
         # Create new clean dbDatabase
         self.base_db = Design.createDetachedDb()
         print(f"Reading {db_file}  file \n")
@@ -411,13 +411,17 @@ class deltaDebugger:
         print(f"Writing in the resulting file  {resulting_file} \n")
         odb.write_db(self.base_db, resulting_file)
 
-        if (1 == wrt_lef):
+        if (1 == write_lef):
+            idx = 1
             for lib in self.base_db.getLibs():
-                odb.write_lef(lib, os.path.join(dir_path, f"END_RESULT.lef"))
+                lef_file = resulting_file[:-4] + str(idx) + ".lef"
+                odb.write_lef(lib, lef_file)
+                idx += 1
 
-        if (1 == wrt_def)
+        if (1 == write_def):
             block = self.base_db.getChip().getBlock()
-            odb.write_def(block, os.path.join(dir_path, f"END_RESULT.def"))
+            def_file = resulting_file[:-3] + "def"
+            odb.write_def(block, def_file)
 
         if (self.base_db is not None):
             self.base_db.destroy(self.base_db)
