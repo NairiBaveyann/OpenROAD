@@ -151,6 +151,7 @@ class deltaDebugger:
                 "Performing a step with the original input file to calculate timeout."
             )
             error, _ = self.perform_step()
+
             if error is None:
                 print("No error found in the original input file.")
                 sys.exit(1)
@@ -198,26 +199,8 @@ class deltaDebugger:
         # Restoring the original base_db file
         if os.path.exists(self.original_base_db_file):
             os.rename(self.original_base_db_file, self.base_db_file)
-
-        # Create new clean dbDatabase
-        self.base_db = Design.createDetachedDb()
-        self.base_db = odb.read_db(self.base_db, self.deltaDebug_result_base_file)
-        # Remove unused dbMasters from dbDatabase befor it's destruction
-        self.base_db.removeUnusedMasters()
-        dir_path = os.path.dirname(self.original_base_db_file)
-
-        # Write in experimental "END_RESULT.odb" file
-        resulting_file = os.path.join(dir_path, f"END_RESULT.odb")
-        odb.write_db(self.base_db, resulting_file)
-
-        for lib in self.base_db.getLibs():
-            odb.write_lef(lib, os.path.join(dir_path, f"END_RESULT.lef"))
-        block = self.base_db.getChip().getBlock()
-        odb.write_def(block, os.path.join(dir_path, f"END_RESULT.def"))
-        # Destroy the DB in memory
-        if (self.base_db is not None):
-            self.base_db.destroy(self.base_db)
-            self.base_db = None
+        # Delete unused master-cells from design
+        self.remove_unused_masters(self.deltaDebug_result_base_file)
 
         print("___________________________________")
         print(f"Resultant file is {self.deltaDebug_result_base_file}")
@@ -410,6 +393,35 @@ class deltaDebugger:
             elif self.cut_level == cutLevel.Nets:
                 self.clear_dont_touch_net(elm)
             elm.destroy(elm)
+
+    def remove_unused_masters(self, db_file, wrt_def = 0, wrt_lef = 0):
+        # Create new clean dbDatabase
+        self.base_db = Design.createDetachedDb()
+        print(f"Reading {db_file}  file \n")
+        self.base_db = odb.read_db(self.base_db, db_file)
+
+        #To remove unused dbMasters from dbDatabase befor it's dstruction
+        print("Removing unused masters...")
+        self.base_db.removeUnusedMasters()
+        # Get .odb file's directory name
+        dir_path = os.path.dirname(self.original_base_db_file)
+
+        # Write in experimental "END_RESULT.odb" file
+        resulting_file = os.path.join(dir_path, f"END_RESULT.odb")
+        print(f"Writing in the resulting file  {resulting_file} \n")
+        odb.write_db(self.base_db, resulting_file)
+
+        if (1 == wrt_lef):
+            for lib in self.base_db.getLibs():
+                odb.write_lef(lib, os.path.join(dir_path, f"END_RESULT.lef"))
+
+        if (1 == wrt_def)
+            block = self.base_db.getChip().getBlock()
+            odb.write_def(block, os.path.join(dir_path, f"END_RESULT.def"))
+
+        if (self.base_db is not None):
+            self.base_db.destroy(self.base_db)
+            self.base_db = None
 
 
 if __name__ == '__main__':

@@ -266,7 +266,8 @@ _dbDatabase::~_dbDatabase()
   delete _chip_tbl;
   delete _prop_tbl;
   delete _name_cache;
-  delete _prop_itr;
+  // dimitri_fix
+  // delete _prop_itr;
 }
 
 dbOStream& operator<<(dbOStream& stream, const _dbDatabase& db)
@@ -431,14 +432,13 @@ int dbDatabase::removeUnusedMasters()
 {
   std::vector<dbMaster*> masters;
   dbSet<dbLib> libs = getLibs();
-
-  for (auto it = libs.begin(); it != libs.end(); ++it) {
+  
+  for(auto it = libs.begin(); it != libs.end(); ++it) {
     dbLib* lib = *it;
     dbSet<dbMaster> mastersOfLib = lib->getMasters();
     dbSet<dbMaster>::iterator masterIt;
     // Collect all dbMasters for later comparision
-    for (masterIt = mastersOfLib.begin(); masterIt != mastersOfLib.end();
-         ++masterIt) {
+    for(masterIt = mastersOfLib.begin(); masterIt != mastersOfLib.end(); ++masterIt) {
       masters.push_back(*masterIt);
     }
   }
@@ -447,13 +447,12 @@ int dbDatabase::removeUnusedMasters()
   dbBlock* block = chip->getBlock();
   dbSet<dbInst> insts = block->getInsts();
   dbSet<dbInst>::iterator instIt;
-
+  
   for (instIt = insts.begin(); instIt != insts.end(); ++instIt) {
     dbMaster* inst_master = instIt->getMaster();
     // Filter out the master that matches inst_master
-    std::vector<dbMaster*>::iterator elem_to_remove
-        = std::find(masters.begin(), masters.end(), inst_master);
-    if (elem_to_remove != masters.end()) {
+    std::vector<dbMaster*>::iterator elem_to_remove = std::find(masters.begin(), masters.end(), inst_master);
+    if(elem_to_remove != masters.end()) {
       // erase used maseters from container
       masters.erase(elem_to_remove);
     }
